@@ -6,8 +6,8 @@ A simple role to backup [AMI](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide
 Requirements
 ------------
 
-ansible>2.1
-boto>2.39
+* ansible>2.1
+* boto>2.39
 
 Role Variables
 --------------
@@ -42,22 +42,23 @@ AMI Tagging.
 
 Example Playbook
 ----------------
+```
 - hosts: servers
   vars:
-    # ami_backup vars
     ami_backup_count: 10
     ami_backup_remove: yes
-    # ami_backup_ec2
+
     ami_backup_ec2_id: i-d5e29291
     ami_backup_ec2_region: us-east-1
     ami_backup_ec2_name: myec2instance
-    # ami_backup_tags
+
     ami_backup_tags_product: myproduct
     ami_backup_tags_role: myproduct-backup
     ami_backup_tags_team: operations
 
   roles:
-     - role: chaordic.ami-backup
+     - role: ami-backup.chaordic
+```
 
 License
 -------
