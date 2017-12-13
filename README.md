@@ -6,8 +6,8 @@ A simple role to backup [AMI](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide
 Requirements
 ------------
 
-* ansible>2.1
-* boto>2.39
+* ansible>=2.1
+* boto>=2.39
 
 Role Variables
 --------------
