@@ -1,1 +1,59 @@
 ---
+- name: Find AMI. Sort descending to get the last iteration count.
+  ec2_ami_find:
+    ec2_region: "{{ ami_backup_ec2_region }}"
+    ami_tags:
+      name: "{{ ami_backup_ec2_name }}"
+    sort: tag
+    sort_tag: increment
+    sort_order: descending
+    no_result_action: success
+  register: fact_ami_info
+
+- name: Set Increment if custom AMI already exists.
+  set_fact:
+    fact_increment: "{{ fact_ami_info.results.0.tags.increment | int + 1 }}"
+  when: fact_ami_info.results.0 is defined
+
+- name: Set Increment if custom AMI not exists.
+  set_fact:
+    fact_increment: 01
+  when: fact_ami_info.results.0 is not defined
+
+- name: Create AMI for backup
+  ec2_ami:
+    state: present
+    region: "{{ ami_backup_ec2_region }}"
+    instance_id: "{{ ami_backup_ec2_id }}"
+    name: "{{ ami_backup_ec2_name }}-{{ fact_increment }}"
+    tags:
+      name: "{{ ami_backup_ec2_name }}"
+      product: "{{ ami_backup_tags_product }}"
+      role: "{{ ami_backup_tags_role }}"
+      team: "{{ ami_backup_tags_team }}"
+      increment: "{{ fact_increment }}"
+    wait: yes
+    no_reboot: yes
+    wait_timeout: 500
+  register: image_created
+
+- name: AMI's created
+  debug:
+    msg: "#> AMI created NAME={{ ami_backup_ec2_name }}-{{ fact_increment }} ID={{ image_created.image_id }}"
+  when: image_created is defined
+
+- name: Delete the oldest number of AMI's that exceed the specified COUNT={{ ami_backup_count }}
+  ec2_ami:
+    state: absent
+    region: "{{ ami_backup_ec2_region }}"
+    image_id: "{{ item.ami_id }}"
+    wait_timeout: 500
+  with_items: "{{ fact_ami_info.results[ami_backup_count:] }}"
+  when: fact_ami_info.results[ami_backup_count:] | length > 0 and ami_backup_remove
+  register: image_deleted
+
+- name: AMI's deleted
+  debug:
+    msg: "#> AMI deleted NAME={{ item.name }} ID={{ item.ami_id }}"
+  with_items: "{{ fact_ami_info.results[ami_backup_count:] }}"
+  when: image_deleted is defined and fact_ami_info.results[ami_backup_count:] | length > 0 and ami_backup_remove
