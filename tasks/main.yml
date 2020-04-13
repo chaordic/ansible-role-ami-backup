@@ -1,14 +1,18 @@
 ---
-- name: Find AMI. Sort descending to get the last iteration count.
+- name: Find AMI. Sort ascending to get the last iteration count.
   ec2_ami_find:
     ec2_region: "{{ ami_backup_ec2_region }}"
     ami_tags:
       name: "{{ ami_backup_ec2_name }}"
     sort: tag
     sort_tag: increment
-    sort_order: descending
+    sort_order: ascending
     no_result_action: success
   register: fact_ami_info
+
+- name: AMI's info
+  debug:
+    msg: "{{ fact_ami_info.results.0 }}"
 
 - name: Set Increment if custom AMI already exists.
   set_fact:
@@ -34,7 +38,7 @@
       increment: "{{ fact_increment }}"
     wait: yes
     no_reboot: yes
-    wait_timeout: 500
+    wait_timeout: 700
   register: image_created
 
 - name: AMI's created
